@@ -1,4 +1,4 @@
-import { SortDirection } from "@/lib/database.types";
+import { SortDirection } from "@/types/database.types";
 
 
 export const teams = [
