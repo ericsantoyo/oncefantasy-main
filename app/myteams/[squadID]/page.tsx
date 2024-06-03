@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { getAllPlayers, getSquadById } from "@/utils/supabase/functions";
 import { redirect } from "next/navigation";
 import {
   getAllMatches,
@@ -6,15 +7,26 @@ import {
   fetchMyTeamPlayers,
   getFinishedMatches,
   getMySquads,
-  deleteSquadById,
-  getSquadById,
 } from "@/utils/supabase/functions";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
+
 import { formatter, lastChangeStyle } from "@/utils/utils";
 import NextMatchesValueTable from "@/components/myTeam/MyTeamMatchesValueTable";
 import PointHistoryTable from "@/components/myTeam/MyTeamPointHistoryTable";
+import { deleteSquadById, fetchPlayersByIDs } from "@/utils/supabase/functions";
+
+type Props = {
+  playerData: players;
+};
 
 export const revalidate = 0;
 
@@ -132,7 +144,7 @@ export default async function MyTeam({
   params: { squadID: string };
 }) {
   const squadID = params.squadID;
-
+  const players = await getAllPlayers();
   const supabase = createClient();
   const email = await getUserEmail(supabase);
 
@@ -186,48 +198,33 @@ export default async function MyTeam({
       0
     );
 
-    const mysquad = await getSquadById(squadID);
+    // const squadsWithPlayers = await Promise.all(
+    //   mySquads.map(async (squad) => {
+    //     const playerIDs = squad.playersIDS.map((p) => p.playerID);
+    //     const players = await fetchPlayersByIDs(playerIDs);
+    //     return {
+    //       ...squad,
+    //       players,
+    //     };
+    //   })
+    // );
+
+    // const squad = team || squadsWithPlayers[0];
+
+    // const squadData = await getSquadById(String(squadID));
+    // const playersIDS = squadData.playersIDS.map((player) =>
+    //   typeof player === "object" && player !== null && "playerID" in player
+    //     ? player.playerID
+    //     : null
+    // );
 
     return (
       <div className="w-full">
-        {/* <pre>{JSON.stringify(mysquad, null, 2)}</pre> */}
         <div className="flex flex-col justify-start items-center gap-4">
-          {/* TEAM INFO CARD */}
+          <h2 className="text-lg font-semibold text-center my-1">
+            {team.squadName}
+          </h2>
 
-          <Card className="transition-all flex flex-row justify-between items-center  md:px-8 px-4 pt-2 pb-4 md:py-2  w-full text-xs md:text-sm  ">
-            <div className="flex flex-col md:flex-row justify-between md:items-center items-start gap-2 md:gap-6 w-full ">
-              <h2 className="text-lg font-semibold text-center">
-                {team.squadName}
-              </h2>
-              <div className="flex flex-row justify-center items-center">
-                <p className=" font-normal mr-2">Valor:</p>
-                <p className=" font-bold">
-                  {formatter.format(totalMarketValue)}
-                </p>
-              </div>
-              <div className="flex flex-row justify-center items-center">
-                <p className=" font-normal mr-2">Cambio:</p>
-
-                {totalLastChange > 0 ? (
-                  <ChevronsUp className="w-4 h-4 text-green-600" />
-                ) : (
-                  <ChevronsDown className="w-4 h-4 text-red-500" />
-                )}
-                <p
-                  className={`font-bold text-right tabular-nums text-xs md:text-sm  tracking-tighter  ${lastChangeStyle(
-                    totalLastChange
-                  )}`}
-                >
-                  {" "}
-                  {formatter.format(totalLastChange)}
-                </p>
-              </div>
-              <div className="flex flex-row justify-center items-center">
-                <p className=" font-normal mr-2	">Jugadores:</p>
-                <p className=" font-bold">{numberOfPlayers} /26</p>
-              </div>
-            </div>
-          </Card>
           <NextMatchesValueTable players={teamPlayers} matches={matchesData} />
 
           <PointHistoryTable players={teamPlayers} matches={matchesData} />
