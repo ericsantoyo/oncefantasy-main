@@ -15,7 +15,7 @@ export default function Footer() {
 
           <SocialIcons className="flex gap-3" />
         </div>
-        <CommingWeek />
+        {/* <CommingWeek /> */}
         <div className=""></div>
       </div>
       <p className="text-gray-500 text-sm text-right ">

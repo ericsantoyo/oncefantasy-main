@@ -29,7 +29,7 @@ export default function MobileMenu() {
           <p className="text-xs">Calendario</p>
 
         </Link>
-        <Link href="/myteam" className="flex flex-col justify-center items-center">
+        <Link href="/myteams" className="flex flex-col justify-center items-center">
         <AssignmentIndIcon className="text-neutral-800" sx={{ fontSize: 32 }} />
           <p className="text-xs">MyTeam</p>
         </Link>

@@ -117,7 +117,7 @@ const SquadPage = () => {
       lineup: lineup,
     });
     setFetch((prev) => !prev);
-    router.push("/myteam");
+    router.push("/myteams");
   };
 
   return (

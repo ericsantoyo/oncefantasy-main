@@ -165,7 +165,7 @@ export default function TopBar(props: Props) {
 
           {/* MYTEAM BUTTON */}
           <Link
-            href="/myteam"
+            href="/myteams"
             className="group w-16 flex flex-col justify-center items-center"
           >
             <p className="transition-all text-transparent text-center text-[8px] p-0 m-0">

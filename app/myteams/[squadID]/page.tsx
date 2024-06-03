@@ -1,5 +1,6 @@
 import { createClient } from "@/utils/supabase/server";
-import MyTeams from "@/components/myTeam/MySquadStats";
+import { getAllPlayers, getSquadById } from "@/utils/supabase/functions";
+import { redirect } from "next/navigation";
 import {
   getAllMatches,
   fetchStatsForMyTeamsPlayers,
@@ -7,10 +8,29 @@ import {
   getFinishedMatches,
   getMySquads,
 } from "@/utils/supabase/functions";
-import { redirect } from "next/navigation";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronsDown, ChevronsUp } from "lucide-react";
+
+import { formatter, lastChangeStyle } from "@/utils/utils";
+import NextMatchesValueTable from "@/components/myTeam/MyTeamMatchesValueTable";
+import PointHistoryTable from "@/components/myTeam/MyTeamPointHistoryTable";
+import { deleteSquadById, fetchPlayersByIDs } from "@/utils/supabase/functions";
+
+type Props = {
+  playerData: players;
+};
 
 export const revalidate = 0;
+
+
 
 function getPlayerStatsMap(stats) {
   const playerStatsMap = new Map();
@@ -119,7 +139,13 @@ const getUserEmail = async (supabase) => {
   return user.email;
 };
 
-export default async function MySquadPage() {
+export default async function Player({
+  params,
+}: {
+  params: { squadID: number };
+}) {
+  const squadID = params.squadID;
+  const players = await getAllPlayers();
   const supabase = createClient();
   const email = await getUserEmail(supabase);
 
@@ -129,6 +155,38 @@ export default async function MySquadPage() {
 
   try {
     const { mySquads } = await getMySquads(email);
+    const squadsWithPlayers = await Promise.all(
+      mySquads.map(async (squad) => {
+        const playerIDs = squad.playersIDS.map((p) => p.playerID);
+        const players = await fetchPlayersByIDs(playerIDs);
+        return {
+          ...squad,
+          players,
+        };
+      })
+    );
+
+    const team = squadsWithPlayers.find((team) => team.squadID.toString() === squadID);
+    const squad = team || squadsWithPlayers[0];
+  
+  const squadData = await getSquadById(String(squadID));
+  const playersIDS = squadData.playersIDS.map((player) =>
+    typeof player === "object" && player !== null && "playerID" in player
+      ? player.playerID
+      : null
+  );
+  const TeamPlayers = squadData.players || [];
+  const numberOfPlayers = squadData.length;
+  const totalMarketValue = squadData.reduce(
+    (acc, player) => acc + (player.marketValue || 0),
+    0
+  );
+  const totalLastChange = squadData.reduce(
+    (acc, player) => acc + (player.lastMarketChange || 0),
+    0
+  );
+  
+   
 
     const playerIds = mySquads.flatMap((squad) =>
       Array.isArray(squad.playersIDS)
@@ -158,53 +216,36 @@ export default async function MySquadPage() {
       finishedMatches,
       mySquads
     );
-
-    return (
-      <>
-        <Link href="/squads">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center mt-6">
-            Create Squad
-          </button>
-        </Link>
-
-        <div className="container mx-auto">
-          <h1 className="text-2xl font-bold mb-4">Squads</h1>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="font-bold">Squad Name</div>
-            <div className="font-bold">Players</div>
-            <div className="font-bold">Actions</div>
-            {squadsWithFormattedAndCalculatedData.map((squad) => (
-              <div key={squad.id}>
-                <div>{squad.squadName}</div>
-                <div>{squad.players ? squad.players.length : 0}/26</div>
-                <div className="flex">
-                  <Link
-                    href={`squads/${squad.id}`}
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    // onClick={() => deleteSquad(squad.id)}
-                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2"
-                  >
-                    Delete
-                  </button>
-                  <Link
-                    href={`lineup/${squad.id}`}
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
-                  >
-                    Edit lineup
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </>
-    );
   } catch (error) {
     console.error("Error fetching data:", error);
-    return redirect("/error");
+  //  
   }
+
+
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-col justify-start items-center gap-4">
+          <h2 className="text-lg font-semibold text-center my-1">
+            {squad.squadName}
+          </h2>
+          
+
+          {selectedTeam && (
+            <NextMatchesValueTable
+              players={selectedTeamPlayers}
+              matches={matches}
+            />
+          )}
+
+          {selectedTeam && (
+            <PointHistoryTable
+              players={selectedTeamPlayers}
+              matches={matches}
+            />
+          )}
+        </div>
+
+    </div>
+  );
 }

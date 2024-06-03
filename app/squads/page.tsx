@@ -6,7 +6,7 @@ import {
   getAllTeams,
   getAllUsers,
 } from "@/utils/supabase/functions";
-import { supabase } from "@/database/supabase";
+import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function Squad() {
@@ -43,6 +43,7 @@ export default function Squad() {
   }
 
   useEffect(() => {
+    const supabase = createClient();
     const data = supabase.auth.onAuthStateChange((event, session) => {
       console.log(session);
       setSession(session);
@@ -94,7 +95,7 @@ export default function Squad() {
 
     await createNewSquad(newSquad);
 
-    router.push("/myteam");
+    router.push("/myteams");
 
     setSquadName("");
     setSelectedPlayers([]);
