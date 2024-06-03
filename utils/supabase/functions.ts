@@ -1,6 +1,6 @@
 import { createClient } from "./client";
 
-const supabase = createClient()
+const supabase = createClient();
 
 async function getAllPlayers(): Promise<{ allPlayers: players[] }> {
   const { data: allPlayers } = await supabase
@@ -11,34 +11,40 @@ async function getAllPlayers(): Promise<{ allPlayers: players[] }> {
 }
 
 async function getAllNews(): Promise<{ allNews: any; error: any }> {
-  const { data, error } = await supabase.from('news').select('*').eq('published', true).order('updated_at', { ascending: false });
+  const { data, error } = await supabase
+    .from("news")
+    .select("*")
+    .eq("published", true)
+    .order("updated_at", { ascending: false });
   // console.log(data);
   return { allNews: data, error };
 }
 
 async function getNewsByPlayerID(playerID: number) {
-
-  const { data: newses, error: newsError } = await supabase.from('news').select('*').eq('published', true).order('updated_at', { ascending: false });
+  const { data: newses, error: newsError } = await supabase
+    .from("news")
+    .select("*")
+    .eq("published", true)
+    .order("updated_at", { ascending: false });
 
   let playerNews: any[] = [];
 
   if (newses) {
-    newses.forEach(news => {
+    newses.forEach((news) => {
       let tags = news.tags;
-      tags.forEach((tag: { id: number; }) => {
+      tags.forEach((tag: { id: number }) => {
         if (tag.id === playerID) {
           playerNews.push(news);
         }
-      })
-    })
+      });
+    });
   }
 
-  return { news: playerNews, error: newsError }
-
+  return { news: playerNews, error: newsError };
 }
 
 async function getNewsById(id: string): Promise<{ news: any; error: any }> {
-  const { data, error } = await supabase.from('news').select('*').eq('id', id);
+  const { data, error } = await supabase.from("news").select("*").eq("id", id);
   return { news: data, error };
 }
 
@@ -111,33 +117,31 @@ async function getMyTeams(): Promise<{ myTeams: myteams[] }> {
 
 async function fetchPlayersByIDs(playerIDs: number[]): Promise<players[]> {
   const { data: players, error } = await supabase
-    .from('players')
-    .select('*')
-    .in('playerID', playerIDs);
+    .from("players")
+    .select("*")
+    .in("playerID", playerIDs);
 
   if (error) {
-    console.error('Error fetching players:', error);
+    console.error("Error fetching players:", error);
     return [];
   }
 
   return players;
 }
 
-
 async function getMySquads(email: string): Promise<{ mySquads: squads[] }> {
   const { data: squads, error } = await supabase
-    .from('squads')
-    .select('*')
-    .eq('email', email); // Ensure this matches your database schema
+    .from("squads")
+    .select("*")
+    .eq("email", email); // Ensure this matches your database schema
 
   if (error) {
-    console.error('Error fetching squads:', error);
+    console.error("Error fetching squads:", error);
     return { mySquads: [] };
   }
 
   return { mySquads: squads };
 }
-
 
 async function fetchStatsForMyTeamsPlayers(playerIds: number[]) {
   const { data: stats, error } = await supabase
@@ -312,21 +316,18 @@ async function createNewSquad(newSquad: squads): Promise<squads> {
   return squad;
 }
 
-
 async function getAllUsers() {
-  const { data: users, error } = await supabase
-    .from('users')
-    .select('*');
-  return { allUsers: users, error }
+  const { data: users, error } = await supabase.from("users").select("*");
+  return { allUsers: users, error };
 }
 
 async function getAllSquadsByEmail(email: string) {
   const { data: squads, error } = await supabase
-    .from('squads')
-    .select('*')
-    .eq('email', email);
+    .from("squads")
+    .select("*")
+    .eq("email", email);
 
-  const formattedSquads = squads.map(squad => ({
+  const formattedSquads = squads.map((squad) => ({
     id: squad.squadID,
     squadName: squad.squadName,
     players: squad.playersIDS,
@@ -339,9 +340,9 @@ async function getAllSquadsByEmail(email: string) {
 async function getSquadById(squadID: string) {
   try {
     const { data, error } = await supabase
-      .from('squads')
-      .select('*')
-      .eq('squadID', squadID)
+      .from("squads")
+      .select("*")
+      .eq("squadID", squadID)
       .single();
 
     if (error) {
@@ -354,35 +355,28 @@ async function getSquadById(squadID: string) {
   }
 }
 
-
-async function updateSquad(squadID: string, updates: Partial<squads>): Promise<void> {
+async function updateSquad(
+  squadID: string,
+  updates: Partial<squads>
+): Promise<void> {
   const { error } = await supabase
-    .from('squads')
+    .from("squads")
     .update(updates)
-    .eq('squadID', squadID);
+    .eq("squadID", squadID);
 
   if (error) {
     throw error;
   }
 }
 
-
-
-
-const deleteSquadById = async (squadID: string ) => {
-
+const deleteSquadById = async (squadID: string) => {
   const response = await supabase
-    .from('squads')
+    .from("squads")
     .delete()
-    .eq('squadID', squadID);
+    .eq("squadID", squadID);
 
   return response;
-
 };
-
-
-
-
 
 export {
   getAllPlayers,
