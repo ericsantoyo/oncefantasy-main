@@ -52,10 +52,10 @@ export default function Login({
   };
 
   return (
-    <div className="flex-1 flex flex-col w-full px-8 sm:max-w-md justify-center gap-2">
+    <div className="flex-1 flex flex-col w-full px-8 sm:max-w-md justify-center gap-2 mx-auto">
       <Link
         href="/"
-        className="absolute left-8 top-8 py-2 px-4 rounded-md no-underline text-foreground bg-btn-background hover:bg-btn-background-hover flex items-center group text-sm"
+        className="w-min p-2 pr-3 mb-4 border border-neutral-300 rounded-md no-underline text-foreground bg-neutral-200 hover:bg-neutral-400-hover flex items-center group text-sm"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -67,16 +67,16 @@ export default function Login({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"
+          className="h-4 w-4 transition-transform group-hover:-translate-x-0.5"
         >
           <polyline points="15 18 9 12 15 6" />
         </svg>{" "}
-        Back
+        Volver
       </Link>
 
       <form className="animate-in flex-1 flex flex-col w-full justify-center gap-2 text-foreground">
         <label className="text-md" htmlFor="email">
-          Email
+          Correo
         </label>
         <input
           className="rounded-md px-4 py-2 bg-inherit border mb-6"
@@ -85,7 +85,7 @@ export default function Login({
           required
         />
         <label className="text-md" htmlFor="password">
-          Password
+        Contraseña
         </label>
         <input
           className="rounded-md px-4 py-2 bg-inherit border mb-6"

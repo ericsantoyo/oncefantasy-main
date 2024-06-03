@@ -5,7 +5,6 @@ import {
   fetchStatsForMyTeamsPlayers,
   fetchMyTeamPlayers,
   getFinishedMatches,
-  getMySquads,
   deleteSquadById,
   getSquadById,
 } from "@/utils/supabase/functions";
@@ -69,7 +68,7 @@ function calculatePointsData(player, playerStats, matches) {
   return pointsData;
 }
 
-function formatAndSortPlayerData(players, stats, matches, squads) {
+function formatAndSortPlayerData(players, stats, matches, squad) {
   const playerStatsMap = getPlayerStatsMap(stats);
 
   const playersWithStatsAndPoints = players.map((player) => ({
@@ -82,36 +81,30 @@ function formatAndSortPlayerData(players, stats, matches, squads) {
     ),
   }));
 
-  const squadsWithPlayers = squads.map((squad) => ({
+  const squadWithPlayers = {
     ...squad,
     players: Array.isArray(squad.playersIDS)
       ? squad.playersIDS
-          .map((player) =>
-            typeof player === "object" &&
-            player !== null &&
-            "playerID" in player
-              ? playersWithStatsAndPoints.find(
-                  (p) => p?.playerID === player?.playerID
-                )
-              : null
+          .map((playerID) =>
+            playersWithStatsAndPoints.find(
+              (p) => p.playerID === playerID.playerID
+            )
           )
           .filter((p) => p !== null)
       : [],
-  }));
+  };
 
-  squadsWithPlayers.forEach((squad) => {
-    squad.players.sort((a, b) => {
-      if (a && b) {
-        if (a.positionID !== b.positionID) {
-          return (a.positionID ?? 0) - (b.positionID ?? 0);
-        }
-        return a.playerID - b.playerID;
+  squadWithPlayers.players.sort((a, b) => {
+    if (a && b) {
+      if (a.positionID !== b.positionID) {
+        return (a.positionID ?? 0) - (b.positionID ?? 0);
       }
-      return 0;
-    });
+      return a.playerID - b.playerID;
+    }
+    return 0;
   });
 
-  return squadsWithPlayers;
+  return squadWithPlayers;
 }
 
 const getUserEmail = async (supabase) => {
@@ -131,108 +124,97 @@ export default async function MyTeam({
 }: {
   params: { squadID: string };
 }) {
-  const squadID = params.squadID;
-
   const supabase = createClient();
-  const email = await getUserEmail(supabase);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!email) {
+  if (!user) {
     return redirect("/login");
   }
+  const squadID = params.squadID;
+  const mysquad = await getSquadById(squadID);
 
-  if (email) {
-    const { mySquads } = await getMySquads(email);
-    const playerIds = mySquads.flatMap((squad) =>
-      Array.isArray(squad.playersIDS)
-        ? squad.playersIDS
-            .map((player) =>
-              typeof player === "object" &&
-              player !== null &&
-              "playerID" in player
-                ? player.playerID
-                : null
-            )
-            .filter((id) => id !== null)
-        : []
-    );
+   // Check if the logged-in user is the owner of the squad
+   if (mysquad.email !== user.email) {
+    // Unauthorized access, log out the user
+    await supabase.auth.signOut(); // Log out the user
 
-    const [stats, players, { finishedMatches }, { allMatches: matchesData }] =
-      await Promise.all([
-        fetchStatsForMyTeamsPlayers(playerIds),
-        fetchMyTeamPlayers(playerIds),
-        getFinishedMatches(),
-        getAllMatches(),
-      ]);
-
-    const squadsWithFormattedAndCalculatedData = formatAndSortPlayerData(
-      players,
-      stats,
-      finishedMatches,
-      mySquads
-    );
-
-    const team = squadsWithFormattedAndCalculatedData.find(
-      (team) => team.squadID.toString() === squadID
-    );
-
-    const teamPlayers = team.players;
-    const numberOfPlayers = teamPlayers.length;
-    const totalMarketValue = teamPlayers.reduce(
-      (acc, player) => acc + (player.marketValue || 0),
-      0
-    );
-    const totalLastChange = teamPlayers.reduce(
-      (acc, player) => acc + (player.lastMarketChange || 0),
-      0
-    );
-
-    const mysquad = await getSquadById(squadID);
-
-    return (
-      <div className="w-full">
-        {/* <pre>{JSON.stringify(mysquad, null, 2)}</pre> */}
-        <div className="flex flex-col justify-start items-center gap-4">
-          {/* TEAM INFO CARD */}
-
-          <Card className="transition-all flex flex-row justify-between items-center  md:px-8 px-4 pt-2 pb-4 md:py-2  w-full text-xs md:text-sm  ">
-            <div className="flex flex-col md:flex-row justify-between md:items-center items-start gap-2 md:gap-6 w-full ">
-              <h2 className="text-lg font-semibold text-center">
-                {team.squadName}
-              </h2>
-              <div className="flex flex-row justify-center items-center">
-                <p className=" font-normal mr-2">Valor:</p>
-                <p className=" font-bold">
-                  {formatter.format(totalMarketValue)}
-                </p>
-              </div>
-              <div className="flex flex-row justify-center items-center">
-                <p className=" font-normal mr-2">Cambio:</p>
-
-                {totalLastChange > 0 ? (
-                  <ChevronsUp className="w-4 h-4 text-green-600" />
-                ) : (
-                  <ChevronsDown className="w-4 h-4 text-red-500" />
-                )}
-                <p
-                  className={`font-bold text-right tabular-nums text-xs md:text-sm  tracking-tighter  ${lastChangeStyle(
-                    totalLastChange
-                  )}`}
-                >
-                  {" "}
-                  {formatter.format(totalLastChange)}
-                </p>
-              </div>
-              <div className="flex flex-row justify-center items-center">
-                <p className=" font-normal mr-2	">Jugadores:</p>
-                <p className=" font-bold">{numberOfPlayers} /26</p>
-              </div>
-            </div>
-          </Card>
-          <NextMatchesValueTable players={teamPlayers} matches={matchesData} />
-
-          <PointHistoryTable players={teamPlayers} matches={matchesData} />
-        </div>
-      </div>
-    );
+    // Redirect to the login page with a message
+    
+    return redirect("/login?message=unauthorized-access");
   }
+
+  const playerIds = mysquad.playersIDS.map((p) => p.playerID);
+
+  const [stats, players, { finishedMatches }, { allMatches: matchesData }] =
+    await Promise.all([
+      fetchStatsForMyTeamsPlayers(playerIds),
+      fetchMyTeamPlayers(playerIds),
+      getFinishedMatches(),
+      getAllMatches(),
+    ]);
+
+  const squadsWithFormattedAndCalculatedData = formatAndSortPlayerData(
+    players,
+    stats,
+    finishedMatches,
+    mysquad
+  );
+
+  const teamPlayers = squadsWithFormattedAndCalculatedData.players;
+  const numberOfPlayers = teamPlayers.length;
+  const totalMarketValue = teamPlayers.reduce(
+    (acc, player) => acc + (player.marketValue || 0),
+    0
+  );
+  const totalLastChange = teamPlayers.reduce(
+    (acc, player) => acc + (player.lastMarketChange || 0),
+    0
+  );
+
+  return (
+    <div className="w-full">
+      {/* <pre>{JSON.stringify(mysquad, null, 2)}</pre> */}
+      <div className="flex flex-col justify-start items-center gap-4">
+        {/* TEAM INFO CARD */}
+
+        <Card className="transition-all flex flex-row justify-between items-center  md:px-8 px-4 pt-2 pb-4 md:py-2  w-full text-xs md:text-sm  ">
+          <div className="flex flex-col md:flex-row justify-between md:items-center items-start gap-2 md:gap-6 w-full ">
+            <h2 className="text-lg font-semibold text-center">
+              {squadsWithFormattedAndCalculatedData.squadName}
+            </h2>
+            <div className="flex flex-row justify-center items-center">
+              <p className=" font-normal mr-2">Valor:</p>
+              <p className=" font-bold">{formatter.format(totalMarketValue)}</p>
+            </div>
+            <div className="flex flex-row justify-center items-center">
+              <p className=" font-normal mr-2">Cambio:</p>
+
+              {totalLastChange > 0 ? (
+                <ChevronsUp className="w-4 h-4 text-green-600" />
+              ) : (
+                <ChevronsDown className="w-4 h-4 text-red-500" />
+              )}
+              <p
+                className={`font-bold text-right tabular-nums text-xs md:text-sm  tracking-tighter  ${lastChangeStyle(
+                  totalLastChange
+                )}`}
+              >
+                {" "}
+                {formatter.format(totalLastChange)}
+              </p>
+            </div>
+            <div className="flex flex-row justify-center items-center">
+              <p className=" font-normal mr-2	">Jugadores:</p>
+              <p className=" font-bold">{numberOfPlayers} /26</p>
+            </div>
+          </div>
+        </Card>
+        <NextMatchesValueTable players={teamPlayers} matches={matchesData} />
+
+        <PointHistoryTable players={teamPlayers} matches={matchesData} />
+      </div>
+    </div>
+  );
 }

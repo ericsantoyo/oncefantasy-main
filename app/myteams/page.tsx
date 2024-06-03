@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Pencil, Eye } from "lucide-react";
+import AuthButton from "@/components/AuthButton";
 
 export const revalidate = 0;
 
@@ -162,7 +163,10 @@ export default async function MyTeamsPage() {
     );
 
     return (
-      <div className="flex flex-col justify-start items-center max-w-2xl mx-auto">
+      <div className="flex flex-col justify-start items-center max-w-2xl mx-auto gap-4">
+        <div className="flex justify-end w-full">
+        <AuthButton />
+        </div>
         <div className="flex flex-row justify-between items-center w-full pb-4">
           <h1 className="text-xl font-bold w-2/3 text-center">My Teams</h1>
           <Link className="w-1/3 flex justify-end mr-4" href="/squads">
@@ -170,6 +174,7 @@ export default async function MyTeamsPage() {
               New Team
             </button>
           </Link>
+         
         </div>
         {/* <Separator className="my-4"/> */}
         <div className="container mx-auto">
@@ -226,6 +231,6 @@ export default async function MyTeamsPage() {
     );
   } catch (error) {
     console.error("Error fetching data:", error);
-    return redirect("/error");
+    
   }
 }
