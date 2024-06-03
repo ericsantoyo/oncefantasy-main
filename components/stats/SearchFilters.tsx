@@ -1,5 +1,5 @@
 "use client";
-import { getAllTeams } from "@/database/client";
+import { getAllTeams } from "@/utils/supabase/functions";
 import { useDebounce } from "use-debounce";
 import { useRouter } from "next/navigation";
 
@@ -133,4 +133,3 @@ const SearchFilters = ({ search }: Props) => {
 };
 
 export default SearchFilters;
-

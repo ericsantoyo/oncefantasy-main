@@ -4,7 +4,7 @@ import {
   getAllStats,
   getTeamByTeamID,
   getPlayersByTeamID,
-} from "@/database/client";
+} from "@/utils/supabase/functions";
 
 import TeamInfoCard from "@/components/team/TeamInfoCard";
 

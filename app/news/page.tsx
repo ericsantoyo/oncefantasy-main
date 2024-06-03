@@ -7,7 +7,7 @@ import {
   getPlayersByTeamID,
   getAllTeams,
   getAllNews,
-} from "@/database/client";
+} from "@/utils/supabase/functions";
 import { Link } from "lucide-react";
 import React, { useEffect, useState } from 'react';
 

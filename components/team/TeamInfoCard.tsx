@@ -14,7 +14,7 @@ import {
   getNumberOfAvailablePlayersOfTeam,
   getTotalLastMarketChangeOfTeam,
 } from "@/utils/utils";
-import { getMatchesByTeamID } from "@/database/client";
+import { getMatchesByTeamID } from "@/utils/supabase/functions";
 import NextMatches from "./TeamNextMatches";
 import TeamLastMatches from "./TeamLastMatches";
 import { ChevronsDown, ChevronsUp } from "lucide-react";

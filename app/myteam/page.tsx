@@ -1,12 +1,14 @@
-import { supabase } from "@/database/supabase";
-import MyTeams from "@/components/myTeam/MyTeams";
+import { createClient } from "@/utils/supabase/server";
+import MyTeams from "@/components/myTeam/MySquadStats";
 import {
   getAllMatches,
   fetchStatsForMyTeamsPlayers,
   fetchMyTeamPlayers,
   getFinishedMatches,
   getMySquads,
-} from "@/database/client";
+} from "@/utils/supabase/functions";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export const revalidate = 0;
 
@@ -105,56 +107,104 @@ function formatAndSortPlayerData(players, stats, matches, squads) {
   return squadsWithPlayers;
 }
 
-export default async function MySquadPage() {
-  // Fetch the session from the Supabase client
+const getUserEmail = async (supabase) => {
   const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (error || !session) {
-    return (
-      <div>Please log in to see your squads.</div>
-    );
+  if (!user) {
+    return null;
   }
 
-  const email = session.user.email;
+  return user.email;
+};
 
-  const { mySquads } = await getMySquads(email);
+export default async function MySquadPage() {
+  const supabase = createClient();
+  const email = await getUserEmail(supabase);
 
-  const playerIds = mySquads.flatMap((squad) =>
-    Array.isArray(squad.playersIDS)
-      ? squad.playersIDS
-          .map((player) =>
-            typeof player === "object" &&
-            player !== null &&
-            "playerID" in player
-              ? player.playerID
-              : null
-          )
-          .filter((id) => id !== null)
-      : []
-  );
+  if (!email) {
+    return redirect("/login");
+  }
 
-  const stats = await fetchStatsForMyTeamsPlayers(playerIds);
-  const players = await fetchMyTeamPlayers(playerIds);
-  const { finishedMatches } = await getFinishedMatches();
-  const { allMatches: matchesData } = await getAllMatches();
+  try {
+    const { mySquads } = await getMySquads(email);
 
-  const squadsWithFormattedAndCalculatedData = formatAndSortPlayerData(
-    players,
-    stats,
-    finishedMatches,
-    mySquads
-  );
+    const playerIds = mySquads.flatMap((squad) =>
+      Array.isArray(squad.playersIDS)
+        ? squad.playersIDS
+            .map((player) =>
+              typeof player === "object" &&
+              player !== null &&
+              "playerID" in player
+                ? player.playerID
+                : null
+            )
+            .filter((id) => id !== null)
+        : []
+    );
 
-  return (
-    <>
-      <MyTeams
-        teams={squadsWithFormattedAndCalculatedData}
-        matches={matchesData}
-        session={session}
-      />
-    </>
-  );
+    const [stats, players, { finishedMatches }, { allMatches: matchesData }] =
+      await Promise.all([
+        fetchStatsForMyTeamsPlayers(playerIds),
+        fetchMyTeamPlayers(playerIds),
+        getFinishedMatches(),
+        getAllMatches(),
+      ]);
+
+    const squadsWithFormattedAndCalculatedData = formatAndSortPlayerData(
+      players,
+      stats,
+      finishedMatches,
+      mySquads
+    );
+
+    return (
+      <>
+        <Link href="/squads">
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center mt-6">
+            Create Squad
+          </button>
+        </Link>
+
+        <div className="container mx-auto">
+          <h1 className="text-2xl font-bold mb-4">Squads</h1>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="font-bold">Squad Name</div>
+            <div className="font-bold">Players</div>
+            <div className="font-bold">Actions</div>
+            {squadsWithFormattedAndCalculatedData.map((squad) => (
+              <div key={squad.id}>
+                <div>{squad.squadName}</div>
+                <div>{squad.players ? squad.players.length : 0}/26</div>
+                <div className="flex">
+                  <Link
+                    href={`squads/${squad.id}`}
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    // onClick={() => deleteSquad(squad.id)}
+                    className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2"
+                  >
+                    Delete
+                  </button>
+                  <Link
+                    href={`lineup/${squad.id}`}
+                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2"
+                  >
+                    Edit lineup
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    return redirect("/error");
+  }
 }

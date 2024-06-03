@@ -1,7 +1,7 @@
 "use client";
 import useSWR from "swr";
 import React, { useEffect, useState } from "react";
-import { getAllMatches } from "@/database/client";
+import { getAllMatches } from "@/utils/supabase/functions";
 import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,8 @@ export default function CommingWeek() {
   };
 
   if (error) return <div>Error fetching matches</div>;
-  if (!matches || !matches.allMatches) return <Skeleton className="w-full h-10" />;
+  if (!matches || !matches.allMatches)
+    return <Skeleton className="w-full h-10" />;
 
   const matchesForSelectedWeek =
     matches && matches.allMatches

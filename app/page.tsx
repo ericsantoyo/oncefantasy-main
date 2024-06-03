@@ -1,6 +1,3 @@
-// import NewMarketDown from "@/app/components/market/NewMarketDown";
-// import NewMarketUp from "@/app/components/market/NewMarketUp";
-// import GamesPreview from "./components/GamesPreview";
 import GamesPreview from "@/components/GamesPreview";
 import NewMarketDown from "@/components/market/NewMarketDown";
 import NewMarketUp from "@/components/market/NewMarketUp";

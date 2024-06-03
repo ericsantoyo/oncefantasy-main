@@ -1,5 +1,5 @@
 import CalendarList from "@/components/calendar/Calendar";
-import { getAllMatches, getAllTeams } from "@/database/client";
+import { getAllMatches, getAllTeams } from "@/utils/supabase/functions";
 
 export default async function Calendar() {
   const { allMatches: matchesData } = await getAllMatches();

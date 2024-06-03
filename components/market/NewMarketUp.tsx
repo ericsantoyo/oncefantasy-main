@@ -20,7 +20,7 @@ import {
   getAllStats,
   getMatchesByTeamID,
   getAllTeams,
-} from "@/database/client";
+} from "@/utils/supabase/functions";
 import {
   getColor,
   formatDate,

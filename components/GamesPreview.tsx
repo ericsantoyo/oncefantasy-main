@@ -2,7 +2,7 @@
 import useSWR from "swr";
 import React, { useEffect, useState } from "react";
 
-import { getAllMatches } from "@/database/client";
+import { getAllMatches } from "@/utils/supabase/functions";
 
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -163,32 +163,33 @@ export default function GamesPreview() {
                             >
                               <div className="flex justify-center items-center gap-1">
                                 <p className=" uppercase font-bold text-center w-full whitespace-nowrap ">
-                                  {match.matchDate && new Date(match.matchDate).toLocaleDateString(
-                                    "es-EU",
-                                    {
+                                  {match.matchDate &&
+                                    new Date(
+                                      match.matchDate
+                                    ).toLocaleDateString("es-EU", {
                                       weekday: "short",
-                                    }
-                                  )}
+                                    })}
                                 </p>
                                 <p className="uppercase font-medium text-center w-full whitespace-nowrap">
-                                  {match.matchDate && new Date(match.matchDate).toLocaleDateString(
-                                    "es-EU",
-                                    {
+                                  {match.matchDate &&
+                                    new Date(
+                                      match.matchDate
+                                    ).toLocaleDateString("es-EU", {
                                       month: "numeric",
                                       day: "numeric",
-                                    }
-                                  )}
+                                    })}
                                 </p>
                               </div>
                               <p className=" uppercase font-medium text-center w-full whitespace-nowrap">
-                                {match.matchDate ? new Date(match.matchDate).toLocaleTimeString(
-                                  "es-EU",
-                                  {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: false,
-                                  }
-                                ) : ""}
+                                {match.matchDate
+                                  ? new Date(
+                                      match.matchDate
+                                    ).toLocaleTimeString("es-EU", {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: false,
+                                    })
+                                  : ""}
                               </p>
                             </div>
                           )}

@@ -1,7 +1,7 @@
 "use client";
 import useSWR from "swr";
 import React, { useEffect, useState } from "react";
-import { getAllMatches } from "@/database/client";
+import { getAllMatches } from "@/utils/supabase/functions";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -66,8 +66,6 @@ export default function GamesSheet() {
         const dateB = b.matchDate ? new Date(b.matchDate).getTime() : 0;
         return dateA - dateB;
       })[0]?.matchDate;
-
-      
 
   const selectedWeekday = selectedWeekMatchDate
     ? new Date(selectedWeekMatchDate).toLocaleDateString("es-EU", {
@@ -218,31 +216,36 @@ export default function GamesSheet() {
                           >
                             <div className="flex justify-center items-center gap-1">
                               <p className=" uppercase font-bold text-center w-full whitespace-nowrap ">
-                                {match.matchDate && new Date(match.matchDate).toLocaleDateString(
-                                  "es-EU",
-                                  {
-                                    weekday: "short",
-                                  }
-                                )}
+                                {match.matchDate &&
+                                  new Date(match.matchDate).toLocaleDateString(
+                                    "es-EU",
+                                    {
+                                      weekday: "short",
+                                    }
+                                  )}
                               </p>
                               {match.matchDate && (
                                 <p className="uppercase font-medium text-center w-full whitespace-nowrap">
-                                  {new Date(match.matchDate).toLocaleDateString("es-EU", {
-                                    month: "numeric",
-                                    day: "numeric",
-                                  })}
+                                  {new Date(match.matchDate).toLocaleDateString(
+                                    "es-EU",
+                                    {
+                                      month: "numeric",
+                                      day: "numeric",
+                                    }
+                                  )}
                                 </p>
                               )}
                             </div>
                             <p className=" uppercase font-medium text-center w-full whitespace-nowrap">
-                              {match.matchDate && new Date(match.matchDate).toLocaleTimeString(
-                                "es-EU",
-                                {
-                                  hour: "numeric",
-                                  minute: "2-digit",
-                                  hour12: false,
-                                }
-                              )}
+                              {match.matchDate &&
+                                new Date(match.matchDate).toLocaleTimeString(
+                                  "es-EU",
+                                  {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                    hour12: false,
+                                  }
+                                )}
                             </p>
                           </div>
                         )}
@@ -352,26 +355,37 @@ export default function GamesSheet() {
                             <div className="flex justify-center items-center gap-1">
                               {match.matchDate && (
                                 <p className=" uppercase font-bold text-center w-full whitespace-nowrap ">
-                                  {new Date(match.matchDate).toLocaleDateString("es-EU", {
-                                    weekday: "short",
-                                  })}
+                                  {new Date(match.matchDate).toLocaleDateString(
+                                    "es-EU",
+                                    {
+                                      weekday: "short",
+                                    }
+                                  )}
                                 </p>
                               )}
                               {match.matchDate && (
                                 <p className="uppercase font-medium text-center w-full whitespace-nowrap">
-                                  {new Date(match.matchDate).toLocaleDateString("es-EU", {
-                                    month: "numeric",
-                                    day: "numeric",
-                                  })}
+                                  {new Date(match.matchDate).toLocaleDateString(
+                                    "es-EU",
+                                    {
+                                      month: "numeric",
+                                      day: "numeric",
+                                    }
+                                  )}
                                 </p>
                               )}
                             </div>
                             <p className=" uppercase font-medium text-center w-full whitespace-nowrap">
-                              {match.matchDate ? new Date(match.matchDate).toLocaleTimeString("es-EU", {
-                                hour: "numeric",
-                                minute: "2-digit",
-                                hour12: false,
-                              }) : ""}
+                              {match.matchDate
+                                ? new Date(match.matchDate).toLocaleTimeString(
+                                    "es-EU",
+                                    {
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: false,
+                                    }
+                                  )
+                                : ""}
                             </p>
                           </div>
                         )}

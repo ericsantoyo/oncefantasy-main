@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 import SearchIcon from "@mui/icons-material/Search";
 import useSWR from "swr";
-import { getAllPlayers } from "@/database/client";
+import { getAllPlayers } from "@/utils/supabase/functions";
 import Image from "next/image";
 import { slugById } from "@/utils/utils";
 import Link from "next/link";

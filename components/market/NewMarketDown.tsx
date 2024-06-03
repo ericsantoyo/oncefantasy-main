@@ -20,7 +20,7 @@ import {
   getAllStats,
   getMatchesByTeamID,
   getAllTeams,
-} from "@/database/client";
+} from "@/utils/supabase/functions";
 import {
   getColor,
   formatDate,
@@ -55,7 +55,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
 
 const NewMarketDown = () => {
   const { data: playersWithStats, error } = useSWR(
@@ -115,23 +114,23 @@ const NewMarketDown = () => {
     const playerData = playersWithStats?.find(
       (player) => player.playerData.playerID === playerId
     );
-  
+
     if (playerData && playerData.playerData.marketValues) {
       const marketValues = playerData.playerData.marketValues;
-  
+
       const playerValueChanges = [];
-  
+
       for (let i = 1; i < marketValues.length; i++) {
         const currentDate = marketValues[i].date;
         const previousDate = marketValues[i - 1].date;
         const currentValue = marketValues[i].marketValue;
         const previousValue = marketValues[i - 1].marketValue;
-  
+
         const valueChange = currentValue - previousValue;
         const percentageChange =
           ((currentValue - previousValue) / previousValue) * 100; // Calculate the percentage change
         const newValue = currentValue; // Calculate the new value
-  
+
         playerValueChanges.push({
           date: currentDate,
           valueChange,
@@ -139,23 +138,24 @@ const NewMarketDown = () => {
           newValue, // Include the new value in the object
         });
       }
-  
+
       // Reverse the array to display the most recent changes first
       const last20ValueChanges = playerValueChanges.reverse().slice(0, 30); // Slice to include only the last 30 entries
-  
+
       return last20ValueChanges;
     }
     return [];
   };
-  
+
   const marketValueDates = selectedPlayer?.playerData?.marketValues
-    ? selectedPlayer.playerData.marketValues.map((entry) => new Date(entry.date))
+    ? selectedPlayer.playerData.marketValues.map(
+        (entry) => new Date(entry.date)
+      )
     : [];
-  
+
   const marketValueList = selectedPlayer?.playerData?.marketValues
     ? selectedPlayer.playerData.marketValues.map((entry) => entry.marketValue)
     : [];
-  
 
   const [teamMatches, setTeamMatches] = useState<matches[]>([]);
 
@@ -220,8 +220,6 @@ const NewMarketDown = () => {
       gridApiRef.current.setQuickFilter(e.target.value);
     }
   };
-
-
 
   let nextThreeMatches: matches[] = [];
 

@@ -2,7 +2,7 @@ import {
   getAllMatches,
   getFinishedMatches,
   getTopPlayersByPositionWithStats,
-} from "@/database/client";
+} from "@/utils/supabase/functions";
 import TopPlayers from "@/components/stats/TopPlayers";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -130,4 +130,3 @@ export default async function StatsPage() {
     </>
   );
 }
-

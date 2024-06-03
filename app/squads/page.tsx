@@ -1,18 +1,21 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import { createNewSquad, getAllPlayers, getAllTeams, getAllUsers } from '@/database/client';
-import { supabase } from '@/database/supabase';
-import { useRouter } from 'next/navigation';
-
+"use client";
+import React, { useEffect, useState } from "react";
+import {
+  createNewSquad,
+  getAllPlayers,
+  getAllTeams,
+  getAllUsers,
+} from "@/utils/supabase/functions";
+import { supabase } from "@/database/supabase";
+import { useRouter } from "next/navigation";
 
 export default function Squad() {
-
   const [teams, setTeams] = useState([]);
   const [players, setPlayers] = useState([]);
   const [selectedPlayers, setSelectedPlayers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [squadName, setSquadName] = useState('');
-  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [squadName, setSquadName] = useState("");
+  const [error, setError] = useState("");
   const [session, setSession] = useState(null);
   const router = useRouter();
 
@@ -25,7 +28,6 @@ export default function Squad() {
     fetchPlayers();
   }, []);
 
-
   useEffect(() => {
     const fetchTeams = async () => {
       const { allTeams } = await getAllTeams(); // Fetch all teams
@@ -35,15 +37,10 @@ export default function Squad() {
     fetchTeams(); // Call the fetchTeams function
   }, []);
 
-
-
   function getTeamByTeamID(teamID) {
-    const team = teams.find(team => team.teamID === teamID);
-    return team ? team.image : '';
+    const team = teams.find((team) => team.teamID === teamID);
+    return team ? team.image : "";
   }
-
-  
-
 
   useEffect(() => {
     const data = supabase.auth.onAuthStateChange((event, session) => {
@@ -55,38 +52,37 @@ export default function Squad() {
     };
   }, []);
 
-
-  const addPlayer = player => {
-    if (selectedPlayers.length < 26 && !selectedPlayers.some(p => p.playerID === player.playerID)) {
-      setSelectedPlayers(prev => [...prev, player]);
+  const addPlayer = (player) => {
+    if (
+      selectedPlayers.length < 26 &&
+      !selectedPlayers.some((p) => p.playerID === player.playerID)
+    ) {
+      setSelectedPlayers((prev) => [...prev, player]);
     }
   };
 
-  const removePlayer = playerId => {
-    setSelectedPlayers(prev => prev.filter(p => p.playerID !== playerId));
+  const removePlayer = (playerId) => {
+    setSelectedPlayers((prev) => prev.filter((p) => p.playerID !== playerId));
   };
 
-
- 
-  
-  const filteredPlayers = players.filter(player =>
+  const filteredPlayers = players.filter((player) =>
     player.nickname.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const saveSquad = async () => {
     if (!squadName) {
-      setError('Squad name must be provided');
+      setError("Squad name must be provided");
       return;
     }
 
     if (selectedPlayers.length === 0) {
-      setError('At least one player must be selected');
+      setError("At least one player must be selected");
       return;
     }
 
-    setError('');
+    setError("");
 
-    const playerIDs = selectedPlayers.map(player => ({
+    const playerIDs = selectedPlayers.map((player) => ({
       playerID: player.playerID,
     }));
 
@@ -94,16 +90,14 @@ export default function Squad() {
       squadName: squadName,
       playersIDS: playerIDs,
       email: session?.user?.email,
-      
     };
 
-    
-      await createNewSquad(newSquad);
+    await createNewSquad(newSquad);
 
-      router.push('/myteam');
-      
-      setSquadName('');
-      setSelectedPlayers([]);
+    router.push("/myteam");
+
+    setSquadName("");
+    setSelectedPlayers([]);
   };
 
   return (
@@ -111,21 +105,27 @@ export default function Squad() {
       <h1 className="text-2xl font-bold text-black">Create a Squad</h1>
       {error && <div className="text-red-500">{error}</div>}
       <div>
-        <label htmlFor="squadName" className="block text-sm font-medium text-black-300">
+        <label
+          htmlFor="squadName"
+          className="block text-sm font-medium text-black-300"
+        >
           Name
         </label>
-        
+
         <input
           type="text"
           id="squadName"
           className="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none sm:text-sm"
           placeholder="Enter squad name"
           value={squadName}
-          onChange={e => setSquadName(e.target.value)}
+          onChange={(e) => setSquadName(e.target.value)}
         />
       </div>
       <div>
-        <label htmlFor="searchPlayer" className="block text-sm font-medium text-black-300">
+        <label
+          htmlFor="searchPlayer"
+          className="block text-sm font-medium text-black-300"
+        >
           Player
         </label>
         <input
@@ -134,10 +134,10 @@ export default function Squad() {
           className="block w-full px-3 py-2 mt-1 text-white bg-gray-700 border border-gray-600 rounded-md shadow-sm focus:outline-none sm:text-sm"
           placeholder="Search players"
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
         <ul className="overflow-auto max-h-60">
-          {filteredPlayers.map(player => (
+          {filteredPlayers.map((player) => (
             <li
               key={player.playerID}
               className="p-2 cursor-pointer hover:bg-gray-100"
@@ -156,26 +156,47 @@ export default function Squad() {
         Save Changes
       </button>
       <div className="mt-4">
-        <div className="text-sm font-medium text-black-300">You have selected {selectedPlayers.length} players out of a maximum of 26</div>
-        
+        <div className="text-sm font-medium text-black-300">
+          You have selected {selectedPlayers.length} players out of a maximum of
+          26
+        </div>
+
         <ul className="mt-2">
-          {selectedPlayers.map(player => (
-            <li key={player.playerID} className="flex items-center justify-between p-2 mb-1 bg-gray-300 rounded-md">
+          {selectedPlayers.map((player) => (
+            <li
+              key={player.playerID}
+              className="flex items-center justify-between p-2 mb-1 bg-gray-300 rounded-md"
+            >
               <div className="flex flex-col items-center">
-                <img src={player.image} alt={player.nickname} style={{ width: '50px', height: '50px', marginRight: '10px' }} />
+                <img
+                  src={player.image}
+                  alt={player.nickname}
+                  style={{ width: "50px", height: "50px", marginRight: "10px" }}
+                />
                 <div>
                   <div>{player.nickname}</div>
                 </div>
               </div>
               <div className="flex items-center justify-center">
                 <div>
-                  <img src={getTeamByTeamID(player.teamID)} alt='' style={{ width: '50px', height: '50px', marginRight: '10px' }} />
+                  <img
+                    src={getTeamByTeamID(player.teamID)}
+                    alt=""
+                    style={{
+                      width: "50px",
+                      height: "50px",
+                      marginRight: "10px",
+                    }}
+                  />
                   <div>{player.teamName}</div>
                 </div>
               </div>
               <div className="flex items-center gap-7 ">
                 <div>{player.position}</div>
-                <button onClick={() => removePlayer(player.playerID)} className="px-2 py-1 font-bold text-white bg-red-500 rounded hover:bg-red-700">
+                <button
+                  onClick={() => removePlayer(player.playerID)}
+                  className="px-2 py-1 font-bold text-white bg-red-500 rounded hover:bg-red-700"
+                >
                   Remove
                 </button>
               </div>
