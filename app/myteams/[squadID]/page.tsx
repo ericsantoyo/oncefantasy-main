@@ -30,8 +30,7 @@ type Props = {
 
 export const revalidate = 0;
 
-
-
+// Helper function to get player stats map
 function getPlayerStatsMap(stats) {
   const playerStatsMap = new Map();
   stats.forEach((stat) => {
@@ -139,10 +138,10 @@ const getUserEmail = async (supabase) => {
   return user.email;
 };
 
-export default async function Player({
+export default async function MyTeam({
   params,
 }: {
-  params: { squadID: number };
+  params: { squadID: string };
 }) {
   const squadID = params.squadID;
   const players = await getAllPlayers();
@@ -153,41 +152,8 @@ export default async function Player({
     return redirect("/login");
   }
 
-  try {
+  if (email) {
     const { mySquads } = await getMySquads(email);
-    const squadsWithPlayers = await Promise.all(
-      mySquads.map(async (squad) => {
-        const playerIDs = squad.playersIDS.map((p) => p.playerID);
-        const players = await fetchPlayersByIDs(playerIDs);
-        return {
-          ...squad,
-          players,
-        };
-      })
-    );
-
-    const team = squadsWithPlayers.find((team) => team.squadID.toString() === squadID);
-    const squad = team || squadsWithPlayers[0];
-  
-  const squadData = await getSquadById(String(squadID));
-  const playersIDS = squadData.playersIDS.map((player) =>
-    typeof player === "object" && player !== null && "playerID" in player
-      ? player.playerID
-      : null
-  );
-  const TeamPlayers = squadData.players || [];
-  const numberOfPlayers = squadData.length;
-  const totalMarketValue = squadData.reduce(
-    (acc, player) => acc + (player.marketValue || 0),
-    0
-  );
-  const totalLastChange = squadData.reduce(
-    (acc, player) => acc + (player.lastMarketChange || 0),
-    0
-  );
-  
-   
-
     const playerIds = mySquads.flatMap((squad) =>
       Array.isArray(squad.playersIDS)
         ? squad.playersIDS
@@ -216,36 +182,54 @@ export default async function Player({
       finishedMatches,
       mySquads
     );
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  //  
-  }
 
+    const team = squadsWithFormattedAndCalculatedData.find(
+      (team) => team.squadID.toString() === squadID
+    );
 
+    const teamPlayers = team.players;
+    const numberOfPlayers = teamPlayers.length;
+    const totalMarketValue = teamPlayers.reduce(
+      (acc, player) => acc + (player.marketValue || 0),
+      0
+    );
+    const totalLastChange = teamPlayers.reduce(
+      (acc, player) => acc + (player.lastMarketChange || 0),
+      0
+    );
 
-  return (
-    <div className="w-full">
-      <div className="flex flex-col justify-start items-center gap-4">
+    // const squadsWithPlayers = await Promise.all(
+    //   mySquads.map(async (squad) => {
+    //     const playerIDs = squad.playersIDS.map((p) => p.playerID);
+    //     const players = await fetchPlayersByIDs(playerIDs);
+    //     return {
+    //       ...squad,
+    //       players,
+    //     };
+    //   })
+    // );
+
+    // const squad = team || squadsWithPlayers[0];
+
+    // const squadData = await getSquadById(String(squadID));
+    // const playersIDS = squadData.playersIDS.map((player) =>
+    //   typeof player === "object" && player !== null && "playerID" in player
+    //     ? player.playerID
+    //     : null
+    // );
+
+    return (
+      <div className="w-full">
+        <div className="flex flex-col justify-start items-center gap-4">
           <h2 className="text-lg font-semibold text-center my-1">
-            {squad.squadName}
+            {team.squadName}
           </h2>
-          
 
-          {selectedTeam && (
-            <NextMatchesValueTable
-              players={selectedTeamPlayers}
-              matches={matches}
-            />
-          )}
+          <NextMatchesValueTable players={teamPlayers} matches={matchesData} />
 
-          {selectedTeam && (
-            <PointHistoryTable
-              players={selectedTeamPlayers}
-              matches={matches}
-            />
-          )}
+          <PointHistoryTable players={teamPlayers} matches={matchesData} />
         </div>
-
-    </div>
-  );
+      </div>
+    );
+  }
 }
