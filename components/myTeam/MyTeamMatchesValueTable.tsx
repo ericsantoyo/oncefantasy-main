@@ -1,9 +1,10 @@
 import React from "react";
 import { Card } from "@/components/ui/card";
-import { ChevronsDown, ChevronsUp } from "lucide-react";
+
 import Link from "next/link";
-import HomeIcon from "@mui/icons-material/Home";
-import FlightIcon from "@mui/icons-material/Flight";
+import { Home } from "lucide-react";
+import { Plane } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -102,10 +103,13 @@ const MyTeamMatchesValueTable: React.FC<MyTeamMatchesValueTableProps> = ({
                   </Link>
                 </TableCell>
                 <TableCell className="bg-neutral-100 border-x-2">
-                  <div className="flex justify-center items-center space-x-2">
+                  <div className="flex justify-between items-center ">
                     {nextThreeMatches.map((match, index) => (
-                      <div key={index} className="flex items-center">
-                        <div className="flex justify-center items-center w-6">
+                      <div
+                        key={index}
+                        className="flex justify-between items-center"
+                      >
+                        <div className="flex justify-center items-center w-6 ">
                           <Image
                             src={`/teamLogos/${slugById(
                               match.localTeamID === player.teamID
@@ -118,17 +122,11 @@ const MyTeamMatchesValueTable: React.FC<MyTeamMatchesValueTableProps> = ({
                             className="h-6 w-auto"
                           />
                         </div>
-                        <div className="flex justify-center items-center ml-1">
+                        <div className="flex justify-center items-center mx-2">
                           {match.visitorTeamID !== player.teamID ? (
-                            <HomeIcon
-                              style={{ fontSize: 18 }}
-                              className="text-neutral-500"
-                            />
+                            <Home size={16} className="text-neutral-500" />
                           ) : (
-                            <FlightIcon
-                              style={{ fontSize: 18 }}
-                              className="rotate-45 text-neutral-400"
-                            />
+                            <Plane size={16} className="text-neutral-500" />
                           )}
                         </div>
                         {index < nextThreeMatches.length - 1 && (
@@ -140,9 +138,9 @@ const MyTeamMatchesValueTable: React.FC<MyTeamMatchesValueTableProps> = ({
                 </TableCell>
                 <TableCell className="text-center ">
                   <div className="flex flex-row justify-center items-center gap-0.5">
-                    <p className="font-bold text-base ">{player.points}</p>
+                    <p className="font-bold text-base w-1/2">{player.points}</p>
                     <div className="mx-2 h-6 border-l border-neutral-300"></div>
-                    <div className="flex flex-col justify-center items-center">
+                    <div className="flex flex-col justify-center items-center w-1/2">
                       <p className="font-bold leading-none">
                         {player.averagePoints?.toFixed(2)}
                       </p>
@@ -151,13 +149,13 @@ const MyTeamMatchesValueTable: React.FC<MyTeamMatchesValueTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell className="text-center bg-neutral-100 border-x-2">
-                  <div className="flex flex-row justify-center items-center ">
-                    <HomeIcon fontSize="small" className="text-neutral-400" />
-                    <p className="font-bold ml-1">
+                  <div className="flex flex-row justify-between items-center ">
+                    <Home size={20} className="text-neutral-500 w-1/4" />
+                    <p className="font-bold ml-1 w-1/4">
                       {player.pointsData?.totalLocalPoints}
                     </p>
                     <div className="mx-2 h-6 border-l border-neutral-300"></div>
-                    <div className="flex flex-col justify-center items-center">
+                    <div className="flex flex-col justify-center items-center w-1/2">
                       <p className="font-bold leading-none">
                         {player.pointsData?.averageLocalPoints?.toFixed(2)}
                       </p>
@@ -166,16 +164,13 @@ const MyTeamMatchesValueTable: React.FC<MyTeamMatchesValueTableProps> = ({
                   </div>
                 </TableCell>
                 <TableCell className="text-center">
-                  <div className="flex flex-row justify-center items-center ">
-                    <FlightIcon
-                      fontSize="small"
-                      className="rotate-45 text-neutral-400"
-                    />
-                    <p className="font-bold ml-1">
+                  <div className="flex flex-row justify-between items-center ">
+                    <Plane size={20} className="text-neutral-500 w-1/4" />
+                    <p className="font-bold ml-1 w-1/4">
                       {player.pointsData?.totalVisitorPoints}
                     </p>
                     <div className="mx-2 h-6 border-l border-neutral-300"></div>
-                    <div className="flex flex-col justify-center items-center">
+                    <div className="flex flex-col justify-center items-center w-1/2">
                       <p className="font-bold leading-none">
                         {player.pointsData?.averageVisitorPoints?.toFixed(2)}
                       </p>
