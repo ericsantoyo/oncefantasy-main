@@ -1,23 +1,37 @@
 import { createClient } from "@/utils/supabase/server";
+import { getAllPlayers, getSquadById } from "@/utils/supabase/functions";
 import { redirect } from "next/navigation";
 import {
   getAllMatches,
   fetchStatsForMyTeamsPlayers,
   fetchMyTeamPlayers,
   getFinishedMatches,
-  deleteSquadById,
-  getSquadById,
+  getMySquads,
 } from "@/utils/supabase/functions";
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ChevronsDown, ChevronsUp } from "lucide-react";
+
 import { formatter, lastChangeStyle } from "@/utils/utils";
 import NextMatchesValueTable from "@/components/myTeam/MyTeamMatchesValueTable";
 import PointHistoryTable from "@/components/myTeam/MyTeamPointHistoryTable";
+import { deleteSquadById, fetchPlayersByIDs } from "@/utils/supabase/functions";
+
+type Props = {
+  playerData: players;
+};
 
 export const revalidate = 0;
 
-// Helper function to get player stats map
+
+
 function getPlayerStatsMap(stats) {
   const playerStatsMap = new Map();
   stats.forEach((stat) => {
@@ -68,7 +82,7 @@ function calculatePointsData(player, playerStats, matches) {
   return pointsData;
 }
 
-function formatAndSortPlayerData(players, stats, matches, squad) {
+function formatAndSortPlayerData(players, stats, matches, squads) {
   const playerStatsMap = getPlayerStatsMap(stats);
 
   const playersWithStatsAndPoints = players.map((player) => ({
@@ -81,30 +95,36 @@ function formatAndSortPlayerData(players, stats, matches, squad) {
     ),
   }));
 
-  const squadWithPlayers = {
+  const squadsWithPlayers = squads.map((squad) => ({
     ...squad,
     players: Array.isArray(squad.playersIDS)
       ? squad.playersIDS
-          .map((playerID) =>
-            playersWithStatsAndPoints.find(
-              (p) => p.playerID === playerID.playerID
-            )
+          .map((player) =>
+            typeof player === "object" &&
+            player !== null &&
+            "playerID" in player
+              ? playersWithStatsAndPoints.find(
+                  (p) => p?.playerID === player?.playerID
+                )
+              : null
           )
           .filter((p) => p !== null)
       : [],
-  };
+  }));
 
-  squadWithPlayers.players.sort((a, b) => {
-    if (a && b) {
-      if (a.positionID !== b.positionID) {
-        return (a.positionID ?? 0) - (b.positionID ?? 0);
+  squadsWithPlayers.forEach((squad) => {
+    squad.players.sort((a, b) => {
+      if (a && b) {
+        if (a.positionID !== b.positionID) {
+          return (a.positionID ?? 0) - (b.positionID ?? 0);
+        }
+        return a.playerID - b.playerID;
       }
-      return a.playerID - b.playerID;
-    }
-    return 0;
+      return 0;
+    });
   });
 
-  return squadWithPlayers;
+  return squadsWithPlayers;
 }
 
 const getUserEmail = async (supabase) => {
@@ -119,102 +139,113 @@ const getUserEmail = async (supabase) => {
   return user.email;
 };
 
-export default async function MyTeam({
+export default async function Player({
   params,
 }: {
-  params: { squadID: string };
+  params: { squadID: number };
 }) {
+  const squadID = params.squadID;
+  const players = await getAllPlayers();
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const email = await getUserEmail(supabase);
 
-  if (!user) {
+  if (!email) {
     return redirect("/login");
   }
-  const squadID = params.squadID;
-  const mysquad = await getSquadById(squadID);
 
-   // Check if the logged-in user is the owner of the squad
-   if (mysquad.email !== user.email) {
-    // Unauthorized access, log out the user
-    await supabase.auth.signOut(); // Log out the user
+  try {
+    const { mySquads } = await getMySquads(email);
+    const squadsWithPlayers = await Promise.all(
+      mySquads.map(async (squad) => {
+        const playerIDs = squad.playersIDS.map((p) => p.playerID);
+        const players = await fetchPlayersByIDs(playerIDs);
+        return {
+          ...squad,
+          players,
+        };
+      })
+    );
 
-    // Redirect to the login page with a message
-    
-    return redirect("/login?message=unauthorized-access");
-  }
-
-  const playerIds = mysquad.playersIDS.map((p) => p.playerID);
-
-  const [stats, players, { finishedMatches }, { allMatches: matchesData }] =
-    await Promise.all([
-      fetchStatsForMyTeamsPlayers(playerIds),
-      fetchMyTeamPlayers(playerIds),
-      getFinishedMatches(),
-      getAllMatches(),
-    ]);
-
-  const squadsWithFormattedAndCalculatedData = formatAndSortPlayerData(
-    players,
-    stats,
-    finishedMatches,
-    mysquad
+    const team = squadsWithPlayers.find((team) => team.squadID.toString() === squadID);
+    const squad = team || squadsWithPlayers[0];
+  
+  const squadData = await getSquadById(String(squadID));
+  const playersIDS = squadData.playersIDS.map((player) =>
+    typeof player === "object" && player !== null && "playerID" in player
+      ? player.playerID
+      : null
   );
-
-  const teamPlayers = squadsWithFormattedAndCalculatedData.players;
-  const numberOfPlayers = teamPlayers.length;
-  const totalMarketValue = teamPlayers.reduce(
+  const TeamPlayers = squadData.players || [];
+  const numberOfPlayers = squadData.length;
+  const totalMarketValue = squadData.reduce(
     (acc, player) => acc + (player.marketValue || 0),
     0
   );
-  const totalLastChange = teamPlayers.reduce(
+  const totalLastChange = squadData.reduce(
     (acc, player) => acc + (player.lastMarketChange || 0),
     0
   );
+  
+   
+
+    const playerIds = mySquads.flatMap((squad) =>
+      Array.isArray(squad.playersIDS)
+        ? squad.playersIDS
+            .map((player) =>
+              typeof player === "object" &&
+              player !== null &&
+              "playerID" in player
+                ? player.playerID
+                : null
+            )
+            .filter((id) => id !== null)
+        : []
+    );
+
+    const [stats, players, { finishedMatches }, { allMatches: matchesData }] =
+      await Promise.all([
+        fetchStatsForMyTeamsPlayers(playerIds),
+        fetchMyTeamPlayers(playerIds),
+        getFinishedMatches(),
+        getAllMatches(),
+      ]);
+
+    const squadsWithFormattedAndCalculatedData = formatAndSortPlayerData(
+      players,
+      stats,
+      finishedMatches,
+      mySquads
+    );
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  //  
+  }
+
+
 
   return (
     <div className="w-full">
-      {/* <pre>{JSON.stringify(mysquad, null, 2)}</pre> */}
       <div className="flex flex-col justify-start items-center gap-4">
-        {/* TEAM INFO CARD */}
+          <h2 className="text-lg font-semibold text-center my-1">
+            {squad.squadName}
+          </h2>
+          
 
-        <Card className="transition-all flex flex-row justify-between items-center  md:px-8 px-4 pt-2 pb-4 md:py-2  w-full text-xs md:text-sm  ">
-          <div className="flex flex-col md:flex-row justify-between md:items-center items-start gap-2 md:gap-6 w-full ">
-            <h2 className="text-lg font-semibold text-center">
-              {squadsWithFormattedAndCalculatedData.squadName}
-            </h2>
-            <div className="flex flex-row justify-center items-center">
-              <p className=" font-normal mr-2">Valor:</p>
-              <p className=" font-bold">{formatter.format(totalMarketValue)}</p>
-            </div>
-            <div className="flex flex-row justify-center items-center">
-              <p className=" font-normal mr-2">Cambio:</p>
+          {selectedTeam && (
+            <NextMatchesValueTable
+              players={selectedTeamPlayers}
+              matches={matches}
+            />
+          )}
 
-              {totalLastChange > 0 ? (
-                <ChevronsUp className="w-4 h-4 text-green-600" />
-              ) : (
-                <ChevronsDown className="w-4 h-4 text-red-500" />
-              )}
-              <p
-                className={`font-bold text-right tabular-nums text-xs md:text-sm  tracking-tighter  ${lastChangeStyle(
-                  totalLastChange
-                )}`}
-              >
-                {" "}
-                {formatter.format(totalLastChange)}
-              </p>
-            </div>
-            <div className="flex flex-row justify-center items-center">
-              <p className=" font-normal mr-2	">Jugadores:</p>
-              <p className=" font-bold">{numberOfPlayers} /26</p>
-            </div>
-          </div>
-        </Card>
-        <NextMatchesValueTable players={teamPlayers} matches={matchesData} />
+          {selectedTeam && (
+            <PointHistoryTable
+              players={selectedTeamPlayers}
+              matches={matches}
+            />
+          )}
+        </div>
 
-        <PointHistoryTable players={teamPlayers} matches={matchesData} />
-      </div>
     </div>
   );
 }
